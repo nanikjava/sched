@@ -2,6 +2,7 @@ package sched
 
 import (
 	"fmt"
+	"github.com/uber-go/tally/prometheus"
 	"sync"
 	"time"
 
@@ -76,6 +77,19 @@ func NewSchedule(id string, timer Timer, jobFunc func(), opts ...Option) *Schedu
 		metrics:         metrics,
 		expectedRuntime: options.expectedRunDuration,
 	}
+}
+
+func (s *Schedule) AddNewUserMetric() *usermetrics {
+	promReporter := prometheus.NewReporter(prometheus.Options{})
+	promMterics, _ := tally.NewRootScope(tally.ScopeOptions{
+		Tags:           map[string]string{},
+		CachedReporter: promReporter,
+		Separator:      prometheus.DefaultSeparator,
+	}, 1*time.Second)
+
+	//metricsScope, _ := tally.NewRootScope(tally.ScopeOptions{CachedReporter: promReporter}, 0)
+	metrics := *newUserMetrics("user", promMterics)
+	return &metrics
 }
 
 // Start Start the scheduler. Method is concurrent safe. Calling Start() have the following effects according to the

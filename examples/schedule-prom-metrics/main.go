@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/sherifabdlnaby/sched"
+	bitcoin2 "github.com/sherifabdlnaby/sched/examples/schedule-prom-metrics/bitcoin"
 	"github.com/uber-go/tally"
 	"github.com/uber-go/tally/prometheus"
 	"log"
@@ -39,13 +40,24 @@ func main() {
 	schedule := sched.NewSchedule("every5s", fixedEvery5s, job, sched.WithLogger(sched.DefaultLogger()),
 		sched.WithMetrics(promMterics))
 
+	var userMetric = schedule.AddNewUserMetric()
+
+	go func() {
+		for {
+			userMetric.MyCounter.Update(randFloats(100,10000))
+			userMetric.Bitcoin.Update(bitcoin2.GetBitCoinData())
+			time.Sleep(5 * time.Second)
+			log.Println("Increasing usermetrics")
+		}
+	}()
+
 	// Start Schedule
 	schedule.Start()
 
 	// Star Prom Server
 	http.Handle("/metrics", promReporter.HTTPHandler())
-	go http.ListenAndServe(":8080", nil)
-	log.Println("Prometheus Metrics at :8080/metrics")
+	go http.ListenAndServe(":8181", nil)
+	log.Println("Prometheus Metrics at :8181/metrics")
 
 	// Listen to CTRL + C And indefintly wait shutdown.
 	signalChan := make(chan os.Signal, 1)
@@ -56,4 +68,8 @@ func main() {
 	schedule.Stop()
 
 	return
+}
+
+func randFloats(min, max float64) float64 {
+	return min + rand.Float64()*(max-min)
 }

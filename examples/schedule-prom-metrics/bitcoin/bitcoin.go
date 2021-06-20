@@ -1,48 +1,14 @@
-package main
+package bitcoin
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sherifabdlnaby/sched"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
-
-func main() {
-
-	fixedTimer30second, err := sched.NewFixed(3 * time.Second)
-	if err != nil {
-		panic(fmt.Sprintf("invalid interval: %s", err.Error()))
-	}
-
-	job := func() {
-		log.Println("Doing some work...")
-		//time.Sleep(1 * time.Second)
-		getBitcoinData()
-		log.Println("Finished Work.")
-	}
-
-	// Create Schedule
-	schedule := sched.NewSchedule("every30s", fixedTimer30second, job, sched.WithLogger(sched.DefaultLogger()))
-
-	// Start Schedule
-	schedule.Start()
-
-	// Listen to CTRL + C And indefintly wait shutdown.
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	_ = <-signalChan
-
-	// Stop before shutting down.
-	schedule.Stop()
-
-	return
-}
 
 type CoinDeskCurrentPriceInAud struct {
 	Bpi struct {
@@ -67,7 +33,7 @@ type CoinDeskCurrentPriceInAud struct {
 	} `json:"time"`
 }
 
-func getBitcoinData() {
+func GetBitCoinData() float64 {
 	// https://api.coindesk.com/v1/bpi/currentprice/aud.json
 	/**
 	{
@@ -109,4 +75,5 @@ func getBitcoinData() {
 		log.Fatal(err)
 	}
 	fmt.Println(currentPrice.Bpi.Aud.RateFloat)
+	return currentPrice.Bpi.Aud.RateFloat
 }

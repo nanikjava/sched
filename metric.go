@@ -17,6 +17,11 @@ type metrics struct {
 	runExceedExpected tally.Counter
 }
 
+type usermetrics struct {
+	MyCounter tally.Gauge
+	Bitcoin   tally.Gauge
+}
+
 func newMetrics(name string, metricsScope tally.Scope) *metrics {
 	subScope := metricsScope.SubScope("sched")
 	return &metrics{
@@ -27,6 +32,14 @@ func newMetrics(name string, metricsScope tally.Scope) *metrics {
 		runTotalElapsed:   subScope.Tagged(map[string]string{"id": name}).Timer("run_total_elapsed_time"),
 		runErrors:         subScope.Tagged(map[string]string{"id": name}).Counter("run_errors"),
 		runExceedExpected: subScope.Tagged(map[string]string{"id": name}).Counter("run_exceed_expected_time"),
+	}
+}
+
+func newUserMetrics(name string, metricsScope tally.Scope) *usermetrics {
+	subScope := metricsScope.SubScope("sched")
+	return &usermetrics{
+		MyCounter: subScope.Tagged(map[string]string{"id": name}).Gauge("mycounter"),
+		Bitcoin:   subScope.Tagged(map[string]string{"id": name}).Gauge("bitcoin"),
 	}
 }
 
